@@ -1,0 +1,167 @@
+<script>
+class DocumentationAssistant {
+    constructor() {
+        this.urls = [];
+        this.isLoading = false;
+        
+        this.initializeElements();
+        this.bindEvents();
+        this.loadUrls(); // Changed from loadConfig
+        this.updateUIState();
+    }
+
+    initializeElements() {
+        this.urlInput = document.getElementById('doc-url');
+        this.addUrlBtn = document.getElementById('add-url');
+        this.urlListItems = document.getElementById('url-list-items');
+        this.emptyState = document.querySelector('.empty-state');
+        this.chatMessages = document.getElementById('chat-messages');
+        this.chatInput = document.getElementById('chat-input');
+        this.sendBtn = document.getElementById('send-message');
+        this.statusText = document.getElementById('status-text');
+    }
+
+    bindEvents() {
+        this.addUrlBtn.addEventListener('click', () => this.addUrl());
+        this.urlInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') this.addUrl(); });
+        this.urlInput.addEventListener('input', () => this.validateUrlInput());
+        this.sendBtn.addEventListener('click', () => this.sendMessage());
+        this.chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.sendMessage(); } });
+        this.chatInput.addEventListener('input', () => this.validateChatInput());
+    }
+
+    loadUrls() {
+        const savedUrls = localStorage.getItem('doc-urls');
+        if (savedUrls) { this.urls = JSON.parse(savedUrls); this.renderUrls(); }
+    }
+
+    saveUrlsToStorage() { localStorage.setItem('doc-urls', JSON.stringify(this.urls)); }
+    
+    validateUrlInput() {
+        const url = this.urlInput.value.trim();
+        const isValid = url && this.isValidUrl(url) && !this.urls.includes(url);
+        this.addUrlBtn.disabled = !isValid;
+    }
+
+    validateChatInput() {
+        const message = this.chatInput.value.trim();
+        this.sendBtn.disabled = !message || this.urls.length === 0 || this.isLoading;
+    }
+
+    isValidUrl(string) { try { new URL(string); return true; } catch (_) { return false; } }
+
+    updateUIState() {
+        const hasUrls = this.urls.length > 0;
+        const canChat = hasUrls && !this.isLoading;
+        this.chatInput.disabled = !canChat;
+        this.validateChatInput();
+        
+        if (!hasUrls) { this.statusText.textContent = 'Add documentation to enable chat'; }
+        else { this.statusText.textContent = 'Ready to chat about your documentation'; }
+        
+        this.chatInput.placeholder = canChat ? 'Ask me to generate code...' : 'Add documentation URLs first...';
+    }
+
+    addUrl() {
+        const url = this.urlInput.value.trim();
+        if (!this.isValidUrl(url) || this.urls.includes(url)) return;
+        this.urls.push(url);
+        this.saveUrlsToStorage();
+        this.renderUrls();
+        this.urlInput.value = '';
+        this.addUrlBtn.disabled = true;
+        this.updateUIState();
+    }
+
+    removeUrl(url) {
+        this.urls = this.urls.filter(u => u !== url);
+        this.saveUrlsToStorage();
+        this.renderUrls();
+        this.updateUIState();
+    }
+
+    renderUrls() {
+        this.emptyState.style.display = this.urls.length === 0 ? 'block' : 'none';
+        this.urlListItems.style.display = this.urls.length === 0 ? 'none' : 'block';
+        this.urlListItems.innerHTML = this.urls.map(url => `
+            <li class="url-item">
+                <a href="${url}" target="_blank" class="url-text" title="${url}">${url}</a>
+                <button class="remove-url" onclick="assistant.removeUrl('${url}')">Remove</button>
+            </li>`).join('');
+    }
+
+    async sendMessage() {
+        const message = this.chatInput.value.trim();
+        if (!message || this.isLoading) return;
+        this.addMessage(message, 'user');
+        this.chatInput.value = '';
+        this.isLoading = true;
+        this.updateUIState();
+        this.showTypingIndicator();
+
+        try {
+            const response = await this.callInkeepAPI(message);
+            this.removeTypingIndicator();
+            this.addMessage(response, 'assistant');
+        } catch (error) {
+            this.removeTypingIndicator();
+            this.addMessage(`Sorry, an error occurred: ${error.message}`, 'assistant');
+            console.error('Chat error:', error);
+        } finally {
+            this.isLoading = false;
+            this.updateUIState();
+            this.chatInput.focus();
+        }
+    }
+
+    async callInkeepAPI(message) {
+        return new Promise((resolve, reject) => {
+            google.script.run
+                .withSuccessHandler(response => {
+                    if (response.error) {
+                        reject(new Error(response.error));
+                    } else {
+                        resolve(response.content);
+                    }
+                })
+                .withFailureHandler(error => {
+                    reject(error);
+                })
+                .callInkeepAPIProxy(message, this.urls); // We no longer pass the config object
+        });
+    }
+
+    addMessage(content, type) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}`;
+        const avatar = type === 'user' ? '<div class="user-avatar">👤</div>' : '<div class="assistant-avatar-small">🤖</div>';
+        messageDiv.innerHTML = `${avatar}<div class="message-bubble">${content.replace(/\n/g, '<br>')}</div>`;
+        const welcomeMessage = this.chatMessages.querySelector('.welcome-message');
+        if (welcomeMessage) { welcomeMessage.remove(); }
+        this.chatMessages.appendChild(messageDiv);
+        this.scrollToBottom();
+    }
+
+
+
+    showTypingIndicator() {
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'message assistant typing-indicator';
+        typingDiv.innerHTML = `<div class="assistant-avatar-small">🤖</div><div class="message-bubble"><div class="loading-dots"><span></span><span></span><span></span></div></div>`;
+        this.chatMessages.appendChild(typingDiv);
+        this.scrollToBottom();
+    }
+
+    removeTypingIndicator() {
+        const indicator = this.chatMessages.querySelector('.typing-indicator');
+        if (indicator) { indicator.remove(); }
+    }
+
+    scrollToBottom() { this.chatMessages.scrollTop = this.chatMessages.scrollHeight; }
+}
+
+let assistant;
+document.addEventListener('DOMContentLoaded', () => {
+    assistant = new DocumentationAssistant();
+});
+</script>
