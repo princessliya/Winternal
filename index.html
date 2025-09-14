@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation Assistant</title>
+    <?!= include('stylesheet'); ?>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-placeholder">❄️</div>
+                    <span class="brand">Winternal</span>
+                </div>
+                <h1>Documentation Assistant</h1>
+                <p>Add documentation URLs and chat with your AI assistant for code generation</p>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="documentation-panel">
+                <h2 class="panel-title">📚 Documentation Sources</h2>
+                <p class="panel-subtitle">Add URLs to your internal documentation</p>
+
+                <div class="url-input-group">
+                    <label for="doc-url" class="input-label">Documentation URL</label>
+                    <input type="url" id="doc-url" class="url-input" placeholder="https://docs.example.com/...">
+                    <button id="add-url" class="add-url-btn">Add URL</button>
+                </div>
+
+                <div class="url-list">
+                    <div class="empty-state">
+                        <div class="empty-icon">🌿</div>
+                        <h3>No documentation URLs added yet</h3>
+                        <p>Add URLs to your internal documentation to get started</p>
+                    </div>
+                    <ul id="url-list-items" class="url-items"></ul>
+                </div>
+            </div>
+
+            <div class="assistant-panel">
+                <h2 class="panel-title">🤖 AI Assistant</h2>
+                <p class="panel-subtitle">Ask for code generation based on your documentation</p>
+
+                <div class="chat-container">
+                    <div id="chat-messages" class="chat-messages">
+                        <div class="welcome-message">
+                            <div class="assistant-avatar">🤖</div>
+                            <div class="message-content">
+                                <h3>Ready to help with code generation</h3>
+                                <p>Add some documentation URLs first, then ask me to generate code based on your documentation!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chat-input-container">
+                        <div class="chat-input-wrapper">
+                            <textarea id="chat-input" class="chat-input" placeholder="Add documentation URLs first..." rows="3" disabled></textarea>
+                            <button id="send-message" class="send-btn" disabled>
+                                <span class="send-icon">↗</span>
+                            </button>
+                        </div>
+                        <div class="input-hint">
+                            <span id="status-text">Add documentation to enable chat</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <?!= include('javascript'); ?>
+</body>
+</html>
