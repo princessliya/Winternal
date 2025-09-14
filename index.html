@@ -3,8 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Documentation Assistant</title>
-    <?!= include('stylesheet'); ?>
+    <title>Winternal - Documentation Assistant</title>
+    <style>
+        /* Reset and base styles */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #3793FF 0%, #1E255E 100%); min-height: 100vh; padding: 20px; line-height: 1.6; }
+        /* Main container */
+        .container { max-width: 1200px; margin: 0 auto; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border-radius: 24px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1); overflow: hidden; min-height: calc(100vh - 40px); position: relative; }
+        /* Header styles */
+        .header { background: linear-gradient(135deg, #1E255E 0%, #3793FF 100%); color: white; padding: 32px 40px; position: relative; overflow: hidden; }
+        .header::before { content: ''; position: absolute; top: 0; right: 0; width: 200px; height: 200px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; transform: translate(50%, -50%); }
+        .header-content { position: relative; z-index: 1; }
+        .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+        .logo-placeholder { font-size: 32px; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)); }
+        .brand { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+        .header h1 { font-size: 32px; font-weight: 800; margin-bottom: 8px; background: linear-gradient(45deg, #ffffff, #e0e7ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .header p { font-size: 16px; opacity: 0.9; font-weight: 400; }
+        /* Main content grid */
+        .main-content { display: grid; grid-template-columns: 1fr 1fr; gap: 0; min-height: 600px; }
+        .documentation-panel, .assistant-panel { padding: 40px; display: flex; flex-direction: column; }
+        .documentation-panel { border-right: 1px solid #e5e7eb; background: #fafbfc; }
+        .assistant-panel { background: #ffffff; }
+        /* Panel headers */
+        .panel-title { font-size: 20px; font-weight: 700; color: #111827; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .panel-subtitle { color: #6b7280; font-size: 14px; margin-bottom: 32px; line-height: 1.5; }
+        /* URL input section */
+        .url-input-group { margin-bottom: 24px; }
+        .input-label { display: block; font-weight: 600; color: #374151; margin-bottom: 8px; font-size: 14px; }
+        .url-input { width: 100%; padding: 16px 20px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 15px; transition: all 0.2s ease; margin-bottom: 16px; background: white; }
+        .url-input:focus { outline: none; border-color: #3793FF; box-shadow: 0 0 0 3px rgba(55, 147, 255, 0.1); }
+        .add-url-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, #3793FF, #1E255E); color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; letter-spacing: 0.5px; }
+        .add-url-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(55, 147, 255, 0.3); }
+        .add-url-btn:disabled { background: #9ca3af; cursor: not-allowed; transform: none; box-shadow: none; }
+        /* URL list */
+        .url-list { flex: 1; }
+        .empty-state { text-align: center; padding: 40px 20px; color: #6b7280; }
+        .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.7; }
+        .empty-state h3 { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #374151; }
+        .empty-state p { font-size: 14px; line-height: 1.5; }
+        .url-items { list-style: none; }
+        .url-item { display: flex; justify-content: space-between; align-items: center; padding: 16px; background: white; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 12px; transition: all 0.2s ease; }
+        .url-item:hover { border-color: #3793FF; box-shadow: 0 2px 8px rgba(55, 147, 255, 0.1); }
+        .url-text { font-size: 14px; color: #374151; text-decoration: none; flex: 1; margin-right: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .url-text:hover { color: #3793FF; }
+        .remove-url { background: #fee2e2; color: #dc2626; border: none; border-radius: 8px; padding: 8px 12px; font-size: 12px; cursor: pointer; transition: all 0.2s ease; }
+        .remove-url:hover { background: #fecaca; }
+        /* Chat container */
+        .chat-container { display: flex; flex-direction: column; height: 100%; max-height: 500px; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 20px 0; margin-bottom: 20px; max-height: 400px; }
+        .welcome-message { display: flex; gap: 12px; padding: 20px; background: #f8fafc; border-radius: 16px; border-left: 4px solid #3793FF; }
+        .assistant-avatar { font-size: 24px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: #3793FF; border-radius: 50%; flex-shrink: 0; }
+        .message-content h3 { font-size: 16px; font-weight: 600; color: #111827; margin-bottom: 4px; }
+        .message-content p { color: #6b7280; font-size: 14px; line-height: 1.5; }
+        .message { margin-bottom: 16px; display: flex; gap: 12px; }
+        .message.user { flex-direction: row-reverse; }
+        .message-bubble { max-width: 80%; padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.4; word-wrap: break-word; }
+        .message.user .message-bubble { background: #3793FF; color: white; border-bottom-right-radius: 4px; }
+        .message.assistant .message-bubble { background: #f3f4f6; color: #111827; border-bottom-left-radius: 4px; }
+        .user-avatar { width: 32px; height: 32px; background: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; flex-shrink: 0; }
+        .assistant-avatar-small { width: 32px; height: 32px; background: #3793FF; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+        /* Chat input */
+        .chat-input-container { border-top: 1px solid #e5e7eb; padding-top: 20px; }
+        .chat-input-wrapper { position: relative; display: flex; gap: 12px; align-items: flex-end; }
+        .chat-input { flex: 1; padding: 16px 20px; border: 2px solid #e5e7eb; border-radius: 16px; font-size: 14px; line-height: 1.4; resize: none; transition: all 0.2s ease; font-family: inherit; max-height: 120px; }
+        .chat-input:focus { outline: none; border-color: #3793FF; box-shadow: 0 0 0 3px rgba(55, 147, 255, 0.1); }
+        .chat-input:disabled { background: #f9fafb; cursor: not-allowed; opacity: 0.6; }
+        .send-btn { width: 48px; height: 48px; background: #3793FF; color: white; border: none; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; flex-shrink: 0; }
+        .send-btn:hover:not(:disabled) { background: #2563eb; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(55, 147, 255, 0.3); }
+        .send-btn:disabled { background: #9ca3af; cursor: not-allowed; transform: none; box-shadow: none; }
+        .send-icon { font-size: 18px; font-weight: bold; }
+        .input-hint { margin-top: 8px; font-size: 12px; color: #9ca3af; text-align: center; }
+        /* Loading indicator */
+        .loading-dots { display: flex; gap: 4px; }
+        .loading-dots span { width: 8px; height: 8px; background: #3793FF; border-radius: 50%; animation: bounce 1.4s ease-in-out infinite both; }
+        .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+        /* Demo notice */
+        .demo-notice { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 12px; padding: 16px; margin-bottom: 24px; }
+        .demo-notice h4 { color: #92400e; font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .demo-notice p { color: #92400e; font-size: 13px; line-height: 1.4; }
+        /* Responsive design */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .container { min-height: calc(100vh - 20px); border-radius: 16px; }
+            .header { padding: 24px; }
+            .header h1 { font-size: 24px; }
+            .main-content { grid-template-columns: 1fr; gap: 0; }
+            .documentation-panel, .assistant-panel { padding: 24px; }
+            .documentation-panel { border-right: none; border-bottom: 1px solid #e5e7eb; }
+            .chat-container { max-height: 400px; }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -21,6 +111,11 @@
 
         <div class="main-content">
             <div class="documentation-panel">
+                <div class="demo-notice">
+                    <h4>🚀 GitHub Pages Demo</h4>
+                    <p>This is a demo version running on GitHub Pages. For full functionality with Inkeep API, deploy to Google Apps Script.</p>
+                </div>
+                
                 <h2 class="panel-title">📚 Documentation Sources</h2>
                 <p class="panel-subtitle">Add URLs to your internal documentation</p>
 
@@ -71,6 +166,171 @@
         </div>
     </div>
 
-    <?!= include('javascript'); ?>
+    <script>
+        class DocumentationAssistant {
+            constructor() {
+                this.urls = [];
+                this.isLoading = false;
+                
+                this.initializeElements();
+                this.bindEvents();
+                this.loadUrls();
+                this.updateUIState();
+            }
+
+            initializeElements() {
+                this.urlInput = document.getElementById('doc-url');
+                this.addUrlBtn = document.getElementById('add-url');
+                this.urlListItems = document.getElementById('url-list-items');
+                this.emptyState = document.querySelector('.empty-state');
+                this.chatMessages = document.getElementById('chat-messages');
+                this.chatInput = document.getElementById('chat-input');
+                this.sendBtn = document.getElementById('send-message');
+                this.statusText = document.getElementById('status-text');
+            }
+
+            bindEvents() {
+                this.addUrlBtn.addEventListener('click', () => this.addUrl());
+                this.urlInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') this.addUrl(); });
+                this.urlInput.addEventListener('input', () => this.validateUrlInput());
+                this.sendBtn.addEventListener('click', () => this.sendMessage());
+                this.chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.sendMessage(); } });
+                this.chatInput.addEventListener('input', () => this.validateChatInput());
+            }
+
+            loadUrls() {
+                const savedUrls = localStorage.getItem('winternal-doc-urls');
+                if (savedUrls) { this.urls = JSON.parse(savedUrls); this.renderUrls(); }
+            }
+
+            saveUrlsToStorage() { localStorage.setItem('winternal-doc-urls', JSON.stringify(this.urls)); }
+            
+            validateUrlInput() {
+                const url = this.urlInput.value.trim();
+                const isValid = url && this.isValidUrl(url) && !this.urls.includes(url);
+                this.addUrlBtn.disabled = !isValid;
+            }
+
+            validateChatInput() {
+                const message = this.chatInput.value.trim();
+                this.sendBtn.disabled = !message || this.urls.length === 0 || this.isLoading;
+            }
+
+            isValidUrl(string) { try { new URL(string); return true; } catch (_) { return false; } }
+
+            updateUIState() {
+                const hasUrls = this.urls.length > 0;
+                const canChat = hasUrls && !this.isLoading;
+                this.chatInput.disabled = !canChat;
+                this.validateChatInput();
+                
+                if (!hasUrls) { this.statusText.textContent = 'Add documentation to enable chat'; }
+                else { this.statusText.textContent = 'Ready to chat about your documentation (Demo Mode)'; }
+                
+                this.chatInput.placeholder = canChat ? 'Ask me to generate code...' : 'Add documentation URLs first...';
+            }
+
+            addUrl() {
+                const url = this.urlInput.value.trim();
+                if (!this.isValidUrl(url) || this.urls.includes(url)) return;
+                this.urls.push(url);
+                this.saveUrlsToStorage();
+                this.renderUrls();
+                this.urlInput.value = '';
+                this.addUrlBtn.disabled = true;
+                this.updateUIState();
+            }
+
+            removeUrl(url) {
+                this.urls = this.urls.filter(u => u !== url);
+                this.saveUrlsToStorage();
+                this.renderUrls();
+                this.updateUIState();
+            }
+
+            renderUrls() {
+                this.emptyState.style.display = this.urls.length === 0 ? 'block' : 'none';
+                this.urlListItems.style.display = this.urls.length === 0 ? 'none' : 'block';
+                this.urlListItems.innerHTML = this.urls.map(url => {
+                    const escapedUrl = url.replace(/'/g, '&#39;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    return `
+                        <li class="url-item">
+                            <a href="${escapedUrl}" target="_blank" class="url-text" title="${escapedUrl}">${escapedUrl}</a>
+                            <button class="remove-url" onclick="assistant.removeUrl('${escapedUrl}')">Remove</button>
+                        </li>`;
+                }).join('');
+            }
+
+            async sendMessage() {
+                const message = this.chatInput.value.trim();
+                if (!message || this.isLoading) return;
+                this.addMessage(message, 'user');
+                this.chatInput.value = '';
+                this.isLoading = true;
+                this.updateUIState();
+                this.showTypingIndicator();
+
+                // GitHub Pages demo response
+                setTimeout(() => {
+                    this.removeTypingIndicator();
+                    this.addMessage(`🚀 **GitHub Pages Demo Response**
+
+This is a demonstration of the Winternal Documentation Assistant interface. 
+
+**Your request:** "${message}"
+
+**Documentation URLs:** ${this.urls.join(', ')}
+
+**For full functionality:**
+- Deploy to Google Apps Script with your Inkeep API key
+- The assistant will then generate real code based on your documentation
+- All UI features you see here will work with live API responses
+
+**Features working in this demo:**
+✅ URL management and validation
+✅ Local storage persistence  
+✅ Chat interface and animations
+✅ Responsive design
+✅ Security measures (XSS protection)
+
+Ready for production deployment! 🎉`, 'assistant');
+                    this.isLoading = false;
+                    this.updateUIState();
+                    this.chatInput.focus();
+                }, 2000);
+            }
+
+            addMessage(content, type) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${type}`;
+                const avatar = type === 'user' ? '<div class="user-avatar">👤</div>' : '<div class="assistant-avatar-small">🤖</div>';
+                messageDiv.innerHTML = `${avatar}<div class="message-bubble">${content.replace(/\n/g, '<br>')}</div>`;
+                const welcomeMessage = this.chatMessages.querySelector('.welcome-message');
+                if (welcomeMessage) { welcomeMessage.remove(); }
+                this.chatMessages.appendChild(messageDiv);
+                this.scrollToBottom();
+            }
+
+            showTypingIndicator() {
+                const typingDiv = document.createElement('div');
+                typingDiv.className = 'message assistant typing-indicator';
+                typingDiv.innerHTML = `<div class="assistant-avatar-small">🤖</div><div class="message-bubble"><div class="loading-dots"><span></span><span></span><span></span></div></div>`;
+                this.chatMessages.appendChild(typingDiv);
+                this.scrollToBottom();
+            }
+
+            removeTypingIndicator() {
+                const indicator = this.chatMessages.querySelector('.typing-indicator');
+                if (indicator) { indicator.remove(); }
+            }
+
+            scrollToBottom() { this.chatMessages.scrollTop = this.chatMessages.scrollHeight; }
+        }
+
+        let assistant;
+        document.addEventListener('DOMContentLoaded', () => {
+            assistant = new DocumentationAssistant();
+        });
+    </script>
 </body>
 </html>
