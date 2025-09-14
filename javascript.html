@@ -83,11 +83,14 @@ class DocumentationAssistant {
     renderUrls() {
         this.emptyState.style.display = this.urls.length === 0 ? 'block' : 'none';
         this.urlListItems.style.display = this.urls.length === 0 ? 'none' : 'block';
-        this.urlListItems.innerHTML = this.urls.map(url => `
-            <li class="url-item">
-                <a href="${url}" target="_blank" class="url-text" title="${url}">${url}</a>
-                <button class="remove-url" onclick="assistant.removeUrl('${url}')">Remove</button>
-            </li>`).join('');
+        this.urlListItems.innerHTML = this.urls.map(url => {
+            const escapedUrl = url.replace(/'/g, '&#39;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return `
+                <li class="url-item">
+                    <a href="${escapedUrl}" target="_blank" class="url-text" title="${escapedUrl}">${escapedUrl}</a>
+                    <button class="remove-url" onclick="assistant.removeUrl('${escapedUrl}')">Remove</button>
+                </li>`;
+        }).join('');
     }
 
     async sendMessage() {
@@ -141,8 +144,6 @@ class DocumentationAssistant {
         this.chatMessages.appendChild(messageDiv);
         this.scrollToBottom();
     }
-
-
 
     showTypingIndicator() {
         const typingDiv = document.createElement('div');

@@ -1,10 +1,10 @@
-// --- START OF CONFIGURATION ---jyyejyj
+// --- START OF CONFIGURATION ---
 // Fill in your Inkeep credentials here. They will be stored securely on the server.
 const INKEEP_CONFIG = {
   tenantId: 'winternal',
   projectId: 'Librarian Documentation Assistant',
   graphId: 'librarian-graph',
-  apiKey: 'YOUR_API_KEY' 
+  apiKey: 'sk_jX9mLNO-SS47.XI-sblFzag12HpM0TNjS8w1O2Oc_qGK5jKJzZJDVOLg'
   // For better security, consider storing apiKey in Script Properties.
 };
 // --- END OF CONFIGURATION ---
